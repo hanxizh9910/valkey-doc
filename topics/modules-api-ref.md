@@ -48,6 +48,7 @@ description: >
 * [Server hooks implementation](#section-server-hooks-implementation)
 * [Module Configurations API](#section-module-configurations-api)
 * [RDB load/save API](#section-rdb-load-save-api)
+* [Scripting Engine API](#section-scripting-engine-api)
 * [Key eviction API](#section-key-eviction-api)
 * [Miscellaneous APIs](#section-miscellaneous-apis)
 * [Defrag API](#section-defrag-api)
@@ -104,7 +105,7 @@ You should avoid using `calloc()` directly.
 
     void *ValkeyModule_TryCalloc(size_t nmemb, size_t size);
 
-**Available since:** 8.0.0
+**Available since:** 9.1.0
 
 Similar to [`ValkeyModule_Calloc`](#ValkeyModule_Calloc), but returns NULL in case of allocation failure, instead
 of panicking.
@@ -125,7 +126,7 @@ Use like `realloc()` for memory obtained with [`ValkeyModule_Alloc()`](#ValkeyMo
 
     void *ValkeyModule_TryRealloc(void *ptr, size_t bytes);
 
-**Available since:** 8.0.0
+**Available since:** 9.1.0
 
 Similar to [`ValkeyModule_Realloc`](#ValkeyModule_Realloc), but returns NULL in case of allocation failure,
 instead of panicking.
@@ -460,7 +461,7 @@ subcommands)
 
     int ValkeyModule_AddACLCategory(ValkeyModuleCtx *ctx, const char *name);
 
-**Available since:** 8.0.0
+**Available since:** 9.1.0
 
 [`ValkeyModule_AddACLCategory`](#ValkeyModule_AddACLCategory) can be used to add new ACL command categories. Category names
 can only contain alphanumeric characters, underscores, or dashes. Categories can only be added
@@ -816,7 +817,7 @@ which part of the info is invalid and why.
                                        ValkeyModuleString **argv,
                                        int argc);
 
-**Available since:** 8.1.0
+**Available since:** 9.1.0
 
 [`ValkeyModule_UpdateRuntimeArgs`](#ValkeyModule_UpdateRuntimeArgs) can be used to update the module argument values.
 The function parameter 'argc' indicates the number of updated arguments, and 'argv'
@@ -1532,6 +1533,24 @@ and not just:
 
 The function always returns `VALKEYMODULE_OK`.
 
+<span id="ValkeyModule_ReplyWithCustomErrorFormat"></span>
+
+### `ValkeyModule_ReplyWithCustomErrorFormat`
+
+    int ValkeyModule_ReplyWithCustomErrorFormat(ValkeyModuleCtx *ctx,
+                                                int update_error_stats,
+                                                const char *fmt,
+                                                ...);
+
+**Available since:** 9.1.0
+
+Reply with a custom error created from a printf format and arguments.
+
+`update_error_stats`: if true server error stats are updated after the reply
+is sent to the client, otherwise no stats are updated.
+
+The function always returns `VALKEYMODULE_OK`.
+
 <span id="ValkeyModule_ReplyWithSimpleString"></span>
 
 ### `ValkeyModule_ReplyWithSimpleString`
@@ -2042,7 +2061,7 @@ using an ACL user, NULL is returned and errno is set to ENOTSUP
 
     int ValkeyModule_MustObeyClient(ValkeyModuleCtx *ctx);
 
-**Available since:** 8.1.0
+**Available since:** 9.1.0
 
 Returns 1 if commands are arriving from the primary client or AOF client
 and should never be rejected.
@@ -5343,7 +5362,7 @@ The list of flags reported is the following:
                                                  int *port,
                                                  int *flags);
 
-**Available since:** 8.0.0
+**Available since:** 9.1.0
 
 Like [`ValkeyModule_GetClusterNodeInfo()`](#ValkeyModule_GetClusterNodeInfo), but returns IP address specifically for the given
 client, depending on whether the client is connected over IPv4 or IPv6.
@@ -5383,7 +5402,7 @@ With the following effects:
 
     unsigned int ValkeyModule_ClusterKeySlot(ValkeyModuleString *key);
 
-**Available since:** 8.0.0
+**Available since:** 9.1.0
 
 Returns the cluster slot of a key, similar to the `CLUSTER KEYSLOT` command.
 This function works even if cluster mode is not enabled.
@@ -5394,7 +5413,7 @@ This function works even if cluster mode is not enabled.
 
     const char *ValkeyModule_ClusterCanonicalKeyNameInSlot(unsigned int slot);
 
-**Available since:** 8.0.0
+**Available since:** 9.1.0
 
 Returns a short string that can be used as a key or as a hash tag in a key,
 such that the key maps to the given cluster slot. Returns NULL if slot is not
@@ -7636,6 +7655,10 @@ Example:
     ValkeyModule_RdbSave(ctx, s, 0);
     ValkeyModule_RdbStreamFree(s);
 
+<span id="section-scripting-engine-api"></span>
+
+## Scripting Engine API
+
 <span id="ValkeyModule_RegisterScriptingEngine"></span>
 
 ### `ValkeyModule_RegisterScriptingEngine`
@@ -7645,7 +7668,7 @@ Example:
                                              ValkeyModuleScriptingEngineCtx *engine_ctx,
                                              ValkeyModuleScriptingEngineMethods *engine_methods);
 
-**Available since:** 8.1.0
+**Available since:** 9.1.0
 
 Registers a new scripting engine in the server.
 
@@ -7670,7 +7693,7 @@ message is logged.
     int ValkeyModule_UnregisterScriptingEngine(ValkeyModuleCtx *ctx,
                                                const char *engine_name);
 
-**Available since:** 8.1.0
+**Available since:** 9.1.0
 
 Removes the scripting engine from the server.
 
@@ -7684,7 +7707,7 @@ Returns `VALKEYMODULE_OK`.
 
     ValkeyModuleScriptingEngineExecutionState ValkeyModule_GetFunctionExecutionState( ValkeyModuleScriptingEngineServerRuntimeCtx *server_ctx);
 
-**Available since:** 8.1.0
+**Available since:** 9.1.0
 
 Returns the state of the current function being executed by the scripting
 engine.
@@ -7693,6 +7716,77 @@ engine.
 
 It will return `VMSE_STATE_KILLED` if the function was already killed either by
 a `SCRIPT KILL`, or `FUNCTION KILL`.
+
+<span id="ValkeyModule_ScriptingEngineDebuggerLog"></span>
+
+### `ValkeyModule_ScriptingEngineDebuggerLog`
+
+    void ValkeyModule_ScriptingEngineDebuggerLog(ValkeyModuleString *msg,
+                                                 int truncate);
+
+**Available since:** 9.1.0
+
+Function to send string messages to the client during a debug session.
+These messages are buffered in memory, and are only sent to the client when
+`ValkeyModule_VM_ScriptingEngineDebuggerFlushLogs` is called.
+
+- `msg`: the message to send.
+
+- `truncate`: if set to 1, the message will be truncated to the maximum length
+  configured in the debugger settings.
+
+<span id="ValkeyModule_ScriptingEngineDebuggerLogRespReplyStr"></span>
+
+### `ValkeyModule_ScriptingEngineDebuggerLogRespReplyStr`
+
+    void ValkeyModule_ScriptingEngineDebuggerLogRespReplyStr(const char *reply);
+
+**Available since:** 9.1.0
+
+Function to log a RESP reply C string as debugger output, in a human readable
+format.
+
+If the resulting string is longer than the maximum text length, configured in
+the debugger settings, plus a few more chars used as prefix, it gets truncated.
+
+<span id="ValkeyModule_ScriptingEngineDebuggerLogRespReply"></span>
+
+### `ValkeyModule_ScriptingEngineDebuggerLogRespReply`
+
+    void ValkeyModule_ScriptingEngineDebuggerLogRespReply(ValkeyModuleCallReply *reply);
+
+**Available since:** 9.1.0
+
+Function to log a RESP reply as debugger output, in a human readable format.
+
+If the resulting string is longer than the maximum text length, configured in
+the debugger settings, plus a few more chars used as prefix, it gets truncated.
+
+<span id="ValkeyModule_ScriptingEngineDebuggerFlushLogs"></span>
+
+### `ValkeyModule_ScriptingEngineDebuggerFlushLogs`
+
+    void ValkeyModule_ScriptingEngineDebuggerFlushLogs(void);
+
+**Available since:** 9.1.0
+
+Function to send all debugger messages in the memory buffer written with the
+[`ValkeyModule_ScriptingEngineDebuggerLog`](#ValkeyModule_ScriptingEngineDebuggerLog) function.
+
+<span id="ValkeyModule_ScriptingEngineDebuggerProcessCommands"></span>
+
+### `ValkeyModule_ScriptingEngineDebuggerProcessCommands`
+
+    void ValkeyModule_ScriptingEngineDebuggerProcessCommands(int *client_disconnected,
+                                                             ValkeyModuleString **err);
+
+**Available since:** 9.1.0
+
+Function used to process debugger commands sent by the client.
+
+This function in conjunction with [`ValkeyModule_ScriptingEngineDebuggerLog`](#ValkeyModule_ScriptingEngineDebuggerLog) and
+[`ValkeyModule_ScriptingEngineDebuggerFlushLogs`](#ValkeyModule_ScriptingEngineDebuggerFlushLogs) allows to implement an
+interactive debugging session for scripts executed by the scripting engine.
 
 <span id="section-key-eviction-api"></span>
 
@@ -8034,7 +8128,7 @@ be used again.
     ValkeyModuleString *ValkeyModule_DefragValkeyModuleString(ValkeyModuleDefragCtx *ctx,
                                                               ValkeyModuleString *str);
 
-**Available since:** 7.2.5
+**Available since:** 9.1.0
 
 Defrag a `ValkeyModuleString` previously allocated by [`ValkeyModule_Alloc`](#ValkeyModule_Alloc), [`ValkeyModule_Calloc`](#ValkeyModule_Calloc), etc.
 See [`ValkeyModule_DefragAlloc()`](#ValkeyModule_DefragAlloc) for more information on how the defragmentation process
@@ -8326,6 +8420,7 @@ There is no guarantee that this info is always available, so this may return -1.
 * [`ValkeyModule_ReplyWithBool`](#ValkeyModule_ReplyWithBool)
 * [`ValkeyModule_ReplyWithCString`](#ValkeyModule_ReplyWithCString)
 * [`ValkeyModule_ReplyWithCallReply`](#ValkeyModule_ReplyWithCallReply)
+* [`ValkeyModule_ReplyWithCustomErrorFormat`](#ValkeyModule_ReplyWithCustomErrorFormat)
 * [`ValkeyModule_ReplyWithDouble`](#ValkeyModule_ReplyWithDouble)
 * [`ValkeyModule_ReplyWithEmptyArray`](#ValkeyModule_ReplyWithEmptyArray)
 * [`ValkeyModule_ReplyWithEmptyString`](#ValkeyModule_ReplyWithEmptyString)
@@ -8357,6 +8452,11 @@ There is no guarantee that this info is always available, so this may return -1.
 * [`ValkeyModule_ScanCursorDestroy`](#ValkeyModule_ScanCursorDestroy)
 * [`ValkeyModule_ScanCursorRestart`](#ValkeyModule_ScanCursorRestart)
 * [`ValkeyModule_ScanKey`](#ValkeyModule_ScanKey)
+* [`ValkeyModule_ScriptingEngineDebuggerFlushLogs`](#ValkeyModule_ScriptingEngineDebuggerFlushLogs)
+* [`ValkeyModule_ScriptingEngineDebuggerLog`](#ValkeyModule_ScriptingEngineDebuggerLog)
+* [`ValkeyModule_ScriptingEngineDebuggerLogRespReply`](#ValkeyModule_ScriptingEngineDebuggerLogRespReply)
+* [`ValkeyModule_ScriptingEngineDebuggerLogRespReplyStr`](#ValkeyModule_ScriptingEngineDebuggerLogRespReplyStr)
+* [`ValkeyModule_ScriptingEngineDebuggerProcessCommands`](#ValkeyModule_ScriptingEngineDebuggerProcessCommands)
 * [`ValkeyModule_SelectDb`](#ValkeyModule_SelectDb)
 * [`ValkeyModule_SendChildHeartbeat`](#ValkeyModule_SendChildHeartbeat)
 * [`ValkeyModule_SendClusterMessage`](#ValkeyModule_SendClusterMessage)
