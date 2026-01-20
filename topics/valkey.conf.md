@@ -35,6 +35,7 @@ is available in the self documented example valkey.conf shipped into the
 Valkey distribution.
 
 * The self documented [valkey.conf for Valkey 10.0](https://raw.githubusercontent.com/valkey-io/valkey/10.0/valkey.conf).
+* The self documented [valkey.conf for Valkey 10.0](https://raw.githubusercontent.com/valkey-io/valkey/10.0/valkey.conf).
 * The self documented [valkey.conf for Valkey 9.0](https://raw.githubusercontent.com/valkey-io/valkey/9.0/valkey.conf).
 * The self documented [valkey.conf for Valkey 8.1](https://raw.githubusercontent.com/valkey-io/valkey/8.1/valkey.conf).
 * The self documented [valkey.conf for Valkey 8.0](https://raw.githubusercontent.com/valkey-io/valkey/8.0/valkey.conf).
