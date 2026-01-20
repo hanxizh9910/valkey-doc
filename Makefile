@@ -4,7 +4,7 @@
 
 # Version info
 VERSION ?= 10.0.0
-DATE ?= 2026-01-12
+DATE ?= 2026-01-20
 
 # Path to the code repo.
 VALKEY_ROOT ?= ../valkey
