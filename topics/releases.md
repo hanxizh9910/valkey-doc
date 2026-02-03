@@ -96,6 +96,7 @@ For contacting the TSC on sensitive matters and security issues, please see [SEC
 
 | Version | Initial release | Maintenance support end | Security support end |
 | -- | -- | -- | -- |
+| 11.0 | 2026-02-03 | 2029-02-03 | 2029-02-03 |
 | 9.1 | 2026-01-20 | 2029-01-20 | 2031-01-20 |
 | 10.0 | 2026-01-12 | 2029-01-12 | 2031-01-12 |
 | 9.0 | 2025-10-21 | 2028-10-21 | 2028-10-21 |
